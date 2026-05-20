@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TODO Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>📝 TODO Manager</h1>
+    <p class="subtitle">ISA Lab — DevOps/SRE Demo App</p>
+
+    <div class="input-row">
+      <input
+        type="text"
+        id="todo-input"
+        placeholder="Adaugă o sarcină nouă..."
+        maxlength="120"
+        autocomplete="off"
+      />
+      <button id="add-btn">Adaugă</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Toate</button>
+      <button class="filter-btn" data-filter="active">Active</button>
+      <button class="filter-btn" data-filter="completed">Finalizate</button>
+    </div>
+
+    <ul id="todo-list"></ul>
+
+    <div class="footer">
+      <span id="count-label">0 sarcini rămase</span>
+      <button id="clear-btn">Șterge finalizate</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

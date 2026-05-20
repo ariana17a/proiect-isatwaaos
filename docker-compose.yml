@@ -1,0 +1,75 @@
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: university-events-api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - events-service
+      - feedback-service
+      - notifications-service
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: university-events-auth-service
+    env_file:
+      - ./auth-service/.env
+    volumes:
+      - core_data:/app/data
+    restart: unless-stopped
+
+  events-service:
+    build:
+      context: ./events-service
+      dockerfile: Dockerfile
+    container_name: university-events-events-service
+    env_file:
+      - ./events-service/.env
+    volumes:
+      - core_data:/app/data
+    depends_on:
+      - auth-service
+    restart: unless-stopped
+
+  feedback-service:
+    build:
+      context: ./feedback-service
+      dockerfile: Dockerfile
+    container_name: university-events-feedback-service
+    env_file:
+      - ./feedback-service/.env
+    volumes:
+      - core_data:/app/data
+    depends_on:
+      - auth-service
+      - events-service
+    restart: unless-stopped
+
+  notifications-service:
+    build:
+      context: ./notifications-service
+      dockerfile: Dockerfile
+    container_name: university-events-notifications-service
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: university-events-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+volumes:
+  core_data:

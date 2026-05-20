@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "app/**"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "app/**"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+jobs:
+  test-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+ 
+      - name: Validate JavaScript syntax
+        run: node --check app/app.js
+
+      - name: Run Node.js tests
+        run: node tests/todo.test.js
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-static-files
+          path: app
+
+      - name: Job summary
+        run: |
+          echo "## CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Node.js version: 20" >> $GITHUB_STEP_SUMMARY
+          echo "- Syntax check: node --check app/app.js" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: node tests/todo.test.js" >> $GITHUB_STEP_SUMMARY
+          echo "- Artifact: app/" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: success" >> $GITHUB_STEP_SUMMARY

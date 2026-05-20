@@ -1,0 +1,76 @@
+name: SLI Monitor
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  sli-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Calculate SLI, SLO, and Error Budget
+        id: sli
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflowId = "ci.yml";
+            const perPage = 50;
+
+            const response = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id: workflowId,
+              per_page: perPage,
+            });
+
+            const completedRuns = response.data.workflow_runs
+              .filter(run => run.status === "completed")
+              .slice(0, 20);
+
+            const total = completedRuns.length;
+            const successful = completedRuns.filter(run => run.conclusion === "success").length;
+            const availability = total === 0 ? 100 : (successful / total) * 100;
+
+            const sloTarget = 95;
+            const errorBudgetPercent = 100 - sloTarget;
+            const consumedBudget = Math.max(0, sloTarget - availability);
+            const budgetRemaining = Math.max(0, errorBudgetPercent - consumedBudget);
+            const breached = availability < sloTarget;
+
+            core.setOutput("total", String(total));
+            core.setOutput("successful", String(successful));
+            core.setOutput("availability", availability.toFixed(2));
+            core.setOutput("slo", String(sloTarget));
+            core.setOutput("error_budget", errorBudgetPercent.toFixed(2));
+            core.setOutput("budget_remaining", budgetRemaining.toFixed(2));
+            core.setOutput("breached", String(breached));
+
+            await core.summary
+              .addHeading("SLI Monitor Summary")
+              .addRaw(`- Workflow monitored: ${workflowId}\n`)
+              .addRaw(`- Completed runs analyzed: ${total}\n`)
+              .addRaw(`- Successful runs: ${successful}\n`)
+              .addRaw(`- SLI (availability): ${availability.toFixed(2)}%\n`)
+              .addRaw(`- SLO target: ${sloTarget}%\n`)
+              .addRaw(`- Error budget: ${errorBudgetPercent.toFixed(2)}%\n`)
+              .addRaw(`- Error budget remaining: ${budgetRemaining.toFixed(2)}%\n`)
+              .addRaw(`- SLO breached: ${breached ? "YES" : "NO"}\n`)
+              .write();
+
+      - name: Fail if SLO is breached
+        if: steps.sli.outputs.breached == 'true'
+        run: |
+          echo "SLO breached: availability is below target."
+          exit 1
+
+      - name: SLO status message
+        if: steps.sli.outputs.breached != 'true'
+        run: echo "SLO respected: availability is within target."
