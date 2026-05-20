@@ -63,7 +63,7 @@ jobs:
               .addRaw(`- Error budget: ${errorBudgetPercent.toFixed(2)}%\n`)
               .addRaw(`- Error budget remaining: ${budgetRemaining.toFixed(2)}%\n`)
               .addRaw(`- SLO breached: ${breached ? "YES" : "NO"}\n`)
-              .write();
+              .write()
 
       - name: Fail if SLO is breached
         if: steps.sli.outputs.breached == 'true'
